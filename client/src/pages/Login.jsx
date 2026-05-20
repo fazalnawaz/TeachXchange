@@ -1,11 +1,17 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import AuthLayout from "../layouts/AuthLayout";
+import Input from "../components/Input";
+import Button from "../components/Button";
+import GraduationCapIcon from "../components/icons/GraduationCapIcon";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+import { API_URL } from "../config";
 
-export default function Login({ setPage }) {
+export default function Login() {
+  const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
@@ -15,17 +21,16 @@ export default function Login({ setPage }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage("");
+    setError("");
 
     try {
-      const response = await axios.post(`${API_URL}/api/auth/login`, form);
-      const data = response.data;
+      const { data } = await axios.post(`${API_URL}/api/auth/login`, form);
       localStorage.setItem("token", data.token);
-      setMessage(data.message || "Login successful");
-      setForm({ email: "", password: "" });
-    } catch (error) {
-      setMessage(
-        error.response?.data?.message || error.message || "Login failed"
+      localStorage.setItem("userEmail", form.email);
+      navigate("/dashboard", { replace: true });
+    } catch (err) {
+      setError(
+        err.response?.data?.message || err.message || "Login failed"
       );
     } finally {
       setLoading(false);
@@ -33,46 +38,64 @@ export default function Login({ setPage }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl shadow-lg w-96">
-      {message && (
-        <div className="mb-4 text-sm text-gray-700">{message}</div>
+    <AuthLayout>
+      <div className="flex flex-col items-center text-center mb-8">
+        <GraduationCapIcon className="w-12 h-12 text-[#2563eb] mb-4" />
+        <h1 className="text-2xl font-bold text-[#111827] mb-2">Welcome Back</h1>
+        <p className="text-[#6b7280] text-sm">
+          Sign in to your TeachXchange account
+        </p>
+      </div>
+
+      {error && (
+        <p className="mb-4 text-sm text-red-600 text-center" role="alert">
+          {error}
+        </p>
       )}
-      <h2 className="text-2xl font-bold mb-4">Login</h2>
 
-      <input
-        type="email"
-        name="email"
-        placeholder="Email"
-        onChange={handleChange}
-        className="w-full p-2 border rounded mb-3"
-      />
+      <form onSubmit={handleSubmit}>
+        <Input
+          label="Email Address"
+          name="email"
+          type="email"
+          value={form.email}
+          onChange={handleChange}
+          placeholder="you@example.com"
+        />
 
-      <input
-        type="password"
-        name="password"
-        placeholder="Password"
-        onChange={handleChange}
-        className="w-full p-2 border rounded mb-3"
-      />
+        <Input
+          label="Password"
+          name="password"
+          type="password"
+          value={form.password}
+          onChange={handleChange}
+          placeholder="Enter your password"
+          showPasswordToggle
+          labelRight={
+            <Link
+              to="/login"
+              className="text-sm font-medium text-[#2563eb] hover:text-[#1d4ed8] no-underline"
+              onClick={(e) => e.preventDefault()}
+            >
+              Forgot password?
+            </Link>
+          }
+        />
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-blue-500 text-white py-2 rounded disabled:opacity-50"
-      >
-        {loading ? "Logging in..." : "Login"}
-      </button>
+        <Button type="submit" variant="full" disabled={loading} className="mt-2">
+          {loading ? "Signing in..." : "Sign In"}
+        </Button>
+      </form>
 
-      <p className="text-sm mt-3">
-        No account?{' '}
-        <span className="text-blue-500 cursor-pointer" onClick={() => setPage("signup")}>
+      <p className="text-center text-sm text-[#6b7280] mt-6">
+        Don&apos;t have an account?{" "}
+        <Link
+          to="/signup"
+          className="font-semibold text-[#2563eb] hover:text-[#1d4ed8] no-underline"
+        >
           Sign up
-        </span>
+        </Link>
       </p>
-
-      <p className="text-sm text-gray-500 mt-2 cursor-pointer" onClick={() => setPage("home")}>
-        Back
-      </p>
-    </form>
+    </AuthLayout>
   );
 }

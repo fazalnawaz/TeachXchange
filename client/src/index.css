@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-accent: #2563eb;
+  --color-text: #111827;
+  --color-text-muted: #6b7280;
+  --color-text-light: #9ca3af;
+  --color-border: #e5e7eb;
+  --color-input-bg: #f3f4f6;
+  --color-surface: #ffffff;
+  --radius-btn: 0.5rem;
+  --radius-card: 1rem;
+  --radius-hero: 1.5rem;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.auth-page-bg {
+  min-height: 100vh;
+  background: linear-gradient(
+    135deg,
+    #eef2ff 0%,
+    #f8fafc 35%,
+    #faf5ff 70%,
+    #f0f9ff 100%
+  );
+}
