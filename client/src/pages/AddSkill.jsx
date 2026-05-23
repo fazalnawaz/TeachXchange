@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import axios from 'axios';
+import { API_URL } from '../config';
 import { 
   BookOpen, 
   Plus, 
@@ -93,8 +94,8 @@ const AddSkill = () => {
     try {
       const token = localStorage.getItem('token');
       const endpoint = skillType === 'teach' 
-        ? 'http://localhost:5000/api/users/add-teach-skill'
-        : 'http://localhost:5000/api/users/add-learn-skill';
+        ? `${API_URL}/api/users/add-teach-skill`
+        : `${API_URL}/api/users/add-learn-skill`;
       
       await axios.post(endpoint, formData, {
         headers: { Authorization: `Bearer ${token}` }

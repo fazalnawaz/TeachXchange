@@ -20,15 +20,19 @@ exports.signup = async (req, res) => {
       email,
       password: hashedPassword,
     });
-const token = jwt.sign(
+
+    const token = jwt.sign(
       { id: user._id },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
+
     res.status(201).json({
       message: "User created successfully",
       userId: user._id,
-        token,
+      token,
+      userName: `${user.firstName} ${user.lastName}`.trim(),
+      userRole: user.role,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -59,6 +63,8 @@ exports.login = async (req, res) => {
     res.json({
       message: "Login successful",
       token,
+      userName: `${user.firstName} ${user.lastName}`.trim(),
+      userRole: user.role,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

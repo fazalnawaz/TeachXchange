@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import axios from 'axios';
+import { API_URL } from '../config';
 import { 
   Award, 
   CheckCircle, 
@@ -39,7 +40,7 @@ const SkillVerification = () => {
   const fetchUnverifiedSkills = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/users/unverified-skills', {
+      const response = await axios.get(`${API_URL}/api/users/unverified-skills`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSkills(response.data);
@@ -74,7 +75,7 @@ const SkillVerification = () => {
         formData.append('projectFile', uploadedFile);
       }
 
-      const response = await axios.post('http://localhost:5000/api/users/verify-skill', formData, {
+      const response = await axios.post(`${API_URL}/api/users/verify-skill`, formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
