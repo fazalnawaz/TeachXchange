@@ -14,14 +14,17 @@ import {
   X,
   Zap,
   Award,
-  Clock,
-  CheckCircle
+  Sun,
+  Moon,
 } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import NotificationBell from './NotificationBell';
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { isDark, toggleTheme } = useTheme();
   const userRole = localStorage.getItem('userRole') || 'learner';
 
   const navItems = {
@@ -61,7 +64,7 @@ const Layout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 transition-colors duration-300">
       {/* Mobile Sidebar Toggle */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -74,7 +77,7 @@ const Layout = ({ children }) => {
       <aside className={`
         fixed top-0 left-0 z-40 w-72 h-screen bg-white shadow-xl transition-transform duration-300
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0
+        lg:translate-x-0 dark:bg-gray-900 dark:border-gray-800
       `}>
         <div className="flex flex-col h-full">
           {/* Logo */}
@@ -139,7 +142,18 @@ const Layout = ({ children }) => {
 
       {/* Main Content */}
       <main className="lg:ml-72 min-h-screen">
-        <div className="container mx-auto px-4 py-8 lg:px-8">
+        <div className="sticky top-0 z-30 flex items-center justify-end gap-3 px-4 py-3 lg:px-8 bg-gradient-to-b from-gray-50/95 to-transparent dark:from-gray-900/95 backdrop-blur-sm">
+          <NotificationBell />
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:shadow-md transition"
+            aria-label="Toggle theme"
+          >
+            {isDark ? <Sun size={20} className="text-amber-400" /> : <Moon size={20} className="text-gray-600" />}
+          </button>
+        </div>
+        <div className="container mx-auto px-4 pb-8 lg:px-8 -mt-2">
           {children}
         </div>
       </main>

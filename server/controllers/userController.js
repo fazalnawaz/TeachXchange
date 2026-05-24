@@ -1,11 +1,15 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const { syncUserSkillArrays } = require("../utils/syncUserSkills");
 
 const buildProfile = (user) => ({
   _id: user._id,
   firstName: user.firstName,
   lastName: user.lastName,
-  name: `${user.firstName} ${user.lastName}`.trim(),
+  name:
+    `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+    user.email ||
+    "User",
   email: user.email,
   role: user.role,
   bio: user.bio,
@@ -19,8 +23,12 @@ const buildProfile = (user) => ({
   totalSessions: user.totalSessions,
   skillsExchanged: user.skillsExchanged,
   isVerified: user.isVerified,
-  skills: user.skills,
-  learningGoals: user.learningGoals,
+  points: user.points || 0,
+  badges: user.badges || [],
+  skills: user.skills || [],
+  learningGoals: user.learningGoals || [],
+  teachSkills: user.skills || [],
+  learnSkills: user.learningGoals || [],
   sessions: user.sessions,
   messages: user.messages,
 });
@@ -29,6 +37,8 @@ exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: "User not found" });
+    syncUserSkillArrays(user);
+    await user.save();
     res.json(buildProfile(user));
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -141,17 +151,22 @@ exports.addTeachSkill = async (req, res) => {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    if (!user.skills) user.skills = [];
     user.role = "teacher";
     user.skills.push({
-      name,
-      category,
+      name: String(name).trim(),
+      category: category || "General",
       experience: Number(experience) || 0,
-      description,
-      proficiency,
+      description: description || "",
+      proficiency: proficiency || "intermediate",
     });
 
+    syncUserSkillArrays(user);
     await user.save();
-    res.status(201).json({ message: "Teach skill added successfully" });
+    res.status(201).json({
+      message: "Teach skill added successfully",
+      teachSkills: user.teachSkills,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -165,15 +180,20 @@ exports.addLearnSkill = async (req, res) => {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    if (!user.learningGoals) user.learningGoals = [];
     user.learningGoals.push({
-      name,
-      category,
+      name: String(name).trim(),
+      category: category || "General",
       interest: Number(interest) || 3,
-      goal,
+      goal: goal || "",
     });
 
+    syncUserSkillArrays(user);
     await user.save();
-    res.status(201).json({ message: "Learning goal saved successfully" });
+    res.status(201).json({
+      message: "Learning goal saved successfully",
+      learnSkills: user.learnSkills,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -212,6 +232,7 @@ exports.verifySkill = async (req, res) => {
     skill.verifiedScore = score;
     skill.verified = score >= 70;
 
+    syncUserSkillArrays(user);
     await user.save();
 
     res.json({

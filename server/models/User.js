@@ -8,7 +8,16 @@ const skillSchema = new mongoose.Schema({
   proficiency: { type: String, default: "intermediate" },
   verified: { type: Boolean, default: false },
   verifiedScore: { type: Number, default: 0 },
+  verifiedAt: { type: Date },
+  verificationMethod: { type: String, default: "ai_quiz" },
   createdAt: { type: Date, default: Date.now },
+});
+
+const badgeSchema = new mongoose.Schema({
+  badgeId: { type: String, required: true },
+  name: { type: String, required: true },
+  description: { type: String, default: "" },
+  earnedAt: { type: Date, default: Date.now },
 });
 
 const sessionSchema = new mongoose.Schema({
@@ -81,6 +90,12 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 4.8,
   },
+  points: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  badges: [badgeSchema],
   teachingHours: {
     type: Number,
     default: 0,
@@ -101,10 +116,48 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  /** Normalized skill names for fast MongoDB matching */
+  teachSkills: {
+    type: [String],
+    default: [],
+  },
+  learnSkills: {
+    type: [String],
+    default: [],
+  },
+  verifiedSkills: {
+    type: [String],
+    default: [],
+  },
   skills: [skillSchema],
   learningGoals: [learningGoalSchema],
+  matchHistory: [
+    {
+      matchRequestId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "MatchRequest",
+      },
+      matchedUserId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      status: {
+        type: String,
+        enum: ["pending", "accepted", "rejected"],
+      },
+      compatibilityScore: { type: Number, default: 0 },
+      exchangeSummary: { type: String, default: "" },
+      createdAt: { type: Date, default: Date.now },
+    },
+  ],
   sessions: [sessionSchema],
   messages: [messageSchema],
 });
+
+userSchema.index({ "skills.name": 1 });
+userSchema.index({ "learningGoals.name": 1 });
+// Single-field indexes only — MongoDB cannot use a compound index on two array fields
+userSchema.index({ teachSkills: 1 });
+userSchema.index({ learnSkills: 1 });
 
 module.exports = mongoose.model("User", userSchema);
