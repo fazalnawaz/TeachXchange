@@ -14,6 +14,8 @@ import {
   rejectMatchRequest,
 } from "../services/matchService";
 import MatchRequestsPanel from "../components/matching/MatchRequestsPanel";
+import ConnectedPartners from "../components/connections/ConnectedPartners";
+import { useToast } from "../context/ToastContext";
 import {
   Search,
   BookOpen,
@@ -110,6 +112,7 @@ function formatSessionDate(date) {
 }
 
 export default function Dashboard() {
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
   const [sessions, setSessions] = useState([]);
@@ -286,12 +289,21 @@ export default function Dashboard() {
           })}
         </div>
 
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <Users className="text-purple-600" size={22} />
+            Connected Partners
+          </h2>
+          <ConnectedPartners />
+        </div>
+
         <MatchRequestsPanel
           requests={matchRequests}
           onAccept={async (id) => {
             setMatchActionLoading(true);
             try {
               await acceptMatchRequest(id);
+              showToast("You are now connected with your learning partner!", "success");
               const [stats, reqs] = await Promise.all([
                 refreshMatches().then((r) => r.data),
                 getMatchRequests().then((r) => r.data),

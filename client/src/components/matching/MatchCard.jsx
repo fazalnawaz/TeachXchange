@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   ArrowLeftRight,
   BookOpen,
@@ -10,6 +11,8 @@ import {
   Clock,
   X,
   Send,
+  MessageCircle,
+  Video,
 } from "lucide-react";
 
 function Avatar({ name }) {
@@ -222,10 +225,34 @@ export default function MatchCard({
         )}
 
         {requestStatus === "accepted" && (
-          <span className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl text-sm font-semibold">
-            <CheckCircle size={16} />
-            Matched — Exchange Active
-          </span>
+          <>
+            <span className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl text-sm font-semibold mb-2">
+              <CheckCircle size={16} />
+              Connected — Start Learning
+            </span>
+            <Link
+              to="/messages"
+              state={{
+                partnerId: user._id,
+                partnerName: displayName,
+              }}
+              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-xl text-sm font-semibold hover:bg-purple-700 transition"
+            >
+              <MessageCircle size={16} />
+              Chat
+            </Link>
+            <Link
+              to="/sessions"
+              state={{
+                partnerId: user._id,
+                partnerName: displayName,
+              }}
+              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 rounded-xl text-sm font-semibold hover:bg-purple-50 dark:hover:bg-purple-900/20 transition"
+            >
+              <Video size={16} />
+              Sessions
+            </Link>
+          </>
         )}
       </div>
     </div>

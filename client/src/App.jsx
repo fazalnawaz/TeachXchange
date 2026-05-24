@@ -40,6 +40,7 @@ import Browse from './pages/Browse';
 import Sessions from './pages/Sessions';
 import Messages from './pages/Messages';
 import Leaderboard from './pages/Leaderboard';
+import VideoRoom from './pages/VideoRoom';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -85,6 +86,11 @@ function App() {
         <Route path="/sessions" element={
           <ProtectedRoute>
             <Sessions />
+          </ProtectedRoute>
+        } />
+        <Route path="/sessions/:id/video" element={
+          <ProtectedRoute>
+            <VideoRoom />
           </ProtectedRoute>
         } />
         <Route path="/messages" element={

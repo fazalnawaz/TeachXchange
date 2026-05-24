@@ -1,32 +1,66 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Bell } from "lucide-react";
-import { getNotifications, markAllNotificationsRead } from "../services/verificationService";
+import {
+  getNotifications,
+  markAllNotificationsRead,
+  getUnreadCount,
+} from "../services/notificationService";
 
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
-      const { data } = await getNotifications();
-      setNotifications(data.notifications || []);
-      setUnreadCount(data.unreadCount || 0);
+      const [listRes, countRes] = await Promise.all([
+        getNotifications(),
+        getUnreadCount(),
+      ]);
+      setNotifications(listRes.data.data || []);
+      setUnreadCount(countRes.data.count || 0);
     } catch {
       // silent
     }
-  };
+  }, []);
 
   useEffect(() => {
     load();
-    const interval = setInterval(load, 60000);
-    return () => clearInterval(interval);
-  }, []);
+    const interval = setInterval(load, 45000);
+    const onRefresh = () => load();
+    window.addEventListener("notifications:refresh", onRefresh);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("notifications:refresh", onRefresh);
+    };
+  }, [load]);
 
   const handleMarkAllRead = async () => {
     await markAllNotificationsRead();
     load();
+  };
+
+  const messagesNavState = (n) => {
+    if (n.type === "chat_message" && n.meta?.conversationId) {
+      return {
+        conversationId: n.meta.conversationId,
+        partnerId: n.meta.senderId,
+      };
+    }
+    if (n.type === "connection_accepted" && n.meta?.partnerId) {
+      return {
+        conversationId: n.meta.conversationId,
+        partnerId: n.meta.partnerId,
+      };
+    }
+    return null;
+  };
+
+  const chatLink = (n) => {
+    if (messagesNavState(n)) return "/messages";
+    if (n.type?.startsWith("session_")) return "/sessions";
+    return null;
   };
 
   return (
@@ -69,34 +103,39 @@ export default function NotificationBell() {
               {notifications.length === 0 ? (
                 <p className="p-4 text-sm text-gray-500 text-center">No notifications</p>
               ) : (
-                notifications.map((n) => (
-                  <div
-                    key={n._id}
-                    className={`px-4 py-3 border-b border-gray-50 dark:border-gray-800 text-sm ${
-                      !n.read ? "bg-purple-50/50 dark:bg-purple-900/20" : ""
-                    }`}
-                  >
-                    <p className="font-medium text-gray-900 dark:text-white">{n.title}</p>
-                    <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">{n.message}</p>
-                  </div>
-                ))
+                notifications.map((n) => {
+                  const href = chatLink(n);
+                  const navState = messagesNavState(n);
+                  const inner = (
+                    <>
+                      <p className="font-medium text-gray-900 dark:text-white">{n.title}</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">{n.message}</p>
+                    </>
+                  );
+                  return href ? (
+                    <Link
+                      key={n._id}
+                      to={href}
+                      state={navState || undefined}
+                      onClick={() => setOpen(false)}
+                      className={`block px-4 py-3 border-b border-gray-50 dark:border-gray-800 text-sm hover:bg-purple-50/50 ${
+                        !n.read ? "bg-purple-50/50 dark:bg-purple-900/20" : ""
+                      }`}
+                    >
+                      {inner}
+                    </Link>
+                  ) : (
+                    <div
+                      key={n._id}
+                      className={`px-4 py-3 border-b border-gray-50 dark:border-gray-800 text-sm ${
+                        !n.read ? "bg-purple-50/50 dark:bg-purple-900/20" : ""
+                      }`}
+                    >
+                      {inner}
+                    </div>
+                  );
+                })
               )}
-            </div>
-            <div className="flex border-t border-gray-100 dark:border-gray-700">
-              <Link
-                to="/browse"
-                onClick={() => setOpen(false)}
-                className="flex-1 text-center py-2.5 text-sm font-medium text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20"
-              >
-                Matches
-              </Link>
-              <Link
-                to="/skill-verification"
-                onClick={() => setOpen(false)}
-                className="flex-1 text-center py-2.5 text-sm font-medium text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 border-l border-gray-100 dark:border-gray-700"
-              >
-                Verification
-              </Link>
             </div>
           </div>
         </>

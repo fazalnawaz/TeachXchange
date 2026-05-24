@@ -5,6 +5,12 @@ const {
   computeMutualExchange,
 } = require("./matchingService");
 const { createNotification } = require("./notificationService");
+const {
+  upsertPendingConnection,
+  acceptConnection,
+  rejectConnection,
+} = require("./connectionService");
+const sessionService = require("./sessionService");
 
 async function sendMatchRequest(fromUserId, toUserId, message = "") {
   if (String(fromUserId) === String(toUserId)) {
@@ -70,6 +76,14 @@ async function sendMatchRequest(fromUserId, toUserId, message = "") {
     meta: { matchRequestId: request._id, fromUserId },
   });
 
+  await upsertPendingConnection({
+    initiatedBy: fromUserId,
+    otherUserId: toUserId,
+    matchRequestId: request._id,
+    compatibilityScore,
+    exchangePair: request.exchangePair,
+  });
+
   return request;
 }
 
@@ -101,23 +115,6 @@ async function respondToRequest(requestId, userId, action) {
   if (action === "accept") {
     const sessionTitle = `Exchange: ${pair.requesterTeaches} ↔ ${pair.requesterLearns}`;
 
-    fromUser.sessions = fromUser.sessions || [];
-    toUser.sessions = toUser.sessions || [];
-
-    fromUser.sessions.push({
-      title: sessionTitle,
-      withUser: toName,
-      status: "upcoming",
-      notes: `Skill exchange with ${toName}`,
-    });
-
-    toUser.sessions.push({
-      title: sessionTitle,
-      withUser: fromName,
-      status: "upcoming",
-      notes: `Skill exchange with ${fromName}`,
-    });
-
     fromUser.skillsExchanged = (fromUser.skillsExchanged || 0) + 1;
     toUser.skillsExchanged = (toUser.skillsExchanged || 0) + 1;
 
@@ -144,12 +141,33 @@ async function respondToRequest(requestId, userId, action) {
 
     await Promise.all([fromUser.save(), toUser.save()]);
 
+    const { connection, conversation } = await acceptConnection({
+      matchRequestId: request._id,
+      fromUser,
+      toUser,
+    });
+
+    const defaultSchedule = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    await sessionService.scheduleSession({
+      userId: request.fromUserId,
+      partnerId: request.toUserId,
+      title: sessionTitle,
+      scheduledAt: defaultSchedule,
+      teachSkill: pair.requesterTeaches,
+      learnSkill: pair.requesterLearns,
+      notes: `Intro session with ${toName}. Use chat to agree on a time.`,
+    });
+
     await createNotification({
       userId: request.fromUserId,
       type: "match_accepted",
       title: "Match Accepted!",
       message: `${toName} accepted your skill exchange (${pair.requesterTeaches} ↔ ${pair.requesterLearns})`,
-      meta: { matchRequestId: request._id },
+      meta: {
+        matchRequestId: request._id,
+        connectionId: connection._id,
+        conversationId: conversation._id,
+      },
     });
 
     await createNotification({
@@ -157,9 +175,18 @@ async function respondToRequest(requestId, userId, action) {
       type: "match_accepted",
       title: "Skill Exchange Match Active",
       message: `You are now matched with ${fromName} for mutual learning`,
-      meta: { matchRequestId: request._id },
+      meta: {
+        matchRequestId: request._id,
+        connectionId: connection._id,
+        conversationId: conversation._id,
+      },
     });
   } else {
+    await rejectConnection({
+      fromUserId: request.fromUserId,
+      toUserId: request.toUserId,
+      matchRequestId: request._id,
+    });
     await createNotification({
       userId: request.fromUserId,
       type: "match_rejected",

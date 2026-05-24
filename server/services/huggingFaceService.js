@@ -1,13 +1,13 @@
 const axios = require("axios");
 
 const HF_API_URL = "https://api-inference.huggingface.co/models";
-const DEFAULT_MODEL = "google/flan-t5-large";
-const FALLBACK_MODEL = "google/flan-t5-base";
+const DEFAULT_MODEL = process.env.HF_MODEL || "google/flan-t5-large";
+const FALLBACK_MODEL = process.env.HF_FALLBACK_MODEL || "mistralai/Mistral-7B-Instruct-v0.2";
 
 /**
  * Calls Hugging Face Inference API for text generation.
  */
-async function generateText(prompt, model = process.env.HF_MODEL || DEFAULT_MODEL) {
+async function generateText(prompt, model = DEFAULT_MODEL) {
   const apiKey = process.env.HF_API_KEY;
   if (!apiKey) {
     throw new Error("HF_API_KEY is not configured in server .env");

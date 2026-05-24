@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import NotificationBell from './NotificationBell';
+import AchievementListener from './AchievementListener';
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -65,6 +66,7 @@ const Layout = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 transition-colors duration-300">
+      <AchievementListener />
       {/* Mobile Sidebar Toggle */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
