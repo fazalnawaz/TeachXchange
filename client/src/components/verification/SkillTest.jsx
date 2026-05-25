@@ -3,6 +3,8 @@ import { ArrowLeft, ArrowRight, Send } from "lucide-react";
 import McqCard from "./McqCard";
 import QuizProgress from "./QuizProgress";
 import QuizTimer from "./QuizTimer";
+import CategoryBadge from "./CategoryBadge";
+import SkillBadge from "./SkillBadge";
 
 export default function SkillTest({ quiz, onSubmit, onCancel, submitting }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -12,6 +14,7 @@ export default function SkillTest({ quiz, onSubmit, onCancel, submitting }) {
   const questions = quiz?.questions || [];
   const current = questions[currentIndex];
   const total = questions.length;
+  const passThreshold = quiz.passThreshold ?? 70;
 
   const handleSelect = (index) => {
     if (!current) return;
@@ -46,6 +49,7 @@ export default function SkillTest({ quiz, onSubmit, onCancel, submitting }) {
     (q) => answers[q.questionId] !== undefined
   );
   const isLast = currentIndex === total - 1;
+  const answeredCount = Object.keys(answers).length;
 
   if (!current) return null;
 
@@ -53,15 +57,28 @@ export default function SkillTest({ quiz, onSubmit, onCancel, submitting }) {
     <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            {quiz.skillName} Assessment
-          </h2>
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              {quiz.skillName} Assessment
+            </h2>
+            <SkillBadge
+              skillKey={quiz.skillKey}
+              skillName={quiz.skillName}
+              size="sm"
+            />
+            <CategoryBadge
+              categoryId={quiz.skillCategory}
+              categoryLabel={quiz.categoryLabel}
+              size="sm"
+            />
+          </div>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            AI-generated • {total} questions • Pass: 70%
+            Hugging Face AI • {total} questions • Pass: {passThreshold}% •{" "}
+            {answeredCount}/{total} answered
           </p>
         </div>
         <QuizTimer
-          totalSeconds={quiz.timeLimitSeconds || 600}
+          totalSeconds={quiz.timeLimitSeconds || 900}
           onExpire={handleExpire}
           active={!submitting}
         />
@@ -69,13 +86,19 @@ export default function SkillTest({ quiz, onSubmit, onCancel, submitting }) {
 
       <QuizProgress current={currentIndex + 1} total={total} />
 
-      <McqCard
-        question={current.question}
-        options={current.options}
-        selectedIndex={answers[current.questionId]}
-        onSelect={handleSelect}
-        questionNumber={currentIndex + 1}
-      />
+      <div key={current.questionId} className="animate-quiz-slide">
+        <McqCard
+          question={current.question}
+          options={current.options}
+          selectedIndex={answers[current.questionId]}
+          onSelect={handleSelect}
+          questionNumber={currentIndex + 1}
+          questionType={current.questionType}
+          difficulty={current.difficulty}
+          hasCode={current.hasCode}
+          conceptTag={current.conceptTag}
+        />
+      </div>
 
       <div className="flex flex-wrap gap-3 justify-between">
         <button
@@ -131,6 +154,7 @@ export default function SkillTest({ quiz, onSubmit, onCancel, submitting }) {
             key={q.questionId}
             type="button"
             onClick={() => setCurrentIndex(i)}
+            title={q.questionType ? `${q.questionType} • ${q.difficulty}` : undefined}
             className={`w-8 h-8 rounded-lg text-xs font-semibold transition ${
               i === currentIndex
                 ? "bg-purple-600 text-white"

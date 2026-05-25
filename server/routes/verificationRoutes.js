@@ -16,6 +16,11 @@ router.get(
   protect,
   asyncHandler(verificationController.getAllSkills)
 );
+router.get(
+  "/skills/:skillId/category",
+  protect,
+  asyncHandler(verificationController.previewCategory)
+);
 router.post(
   "/quiz/start",
   protect,

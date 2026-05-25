@@ -1,24 +1,31 @@
 const User = require("../models/User");
 const VerificationAttempt = require("../models/VerificationAttempt");
 const VerificationResult = require("../models/VerificationResult");
-const { generateQuiz, gradeQuiz } = require("./quizGeneratorService");
 const {
-  createNotification,
-} = require("./notificationService");
+  generateQuiz,
+  gradeQuiz,
+  getVerificationHistory,
+  PASS_THRESHOLD,
+} = require("./quizGeneratorService");
+const { detectSkillContext } = require("./skillCategoryService");
+const SkillQuestionHistory = require("../models/SkillQuestionHistory");
+const { syncUserSkillArrays } = require("../utils/syncUserSkills");
+const { createNotification } = require("./notificationService");
 const {
   POINT_VALUES,
   awardPoints,
   syncVerificationBadges,
 } = require("./gamificationService");
 
-/**
- * Strip correct answers before sending quiz to client.
- */
 function sanitizeQuestionsForClient(questions) {
   return questions.map((q) => ({
     questionId: q.questionId,
     question: q.question,
     options: q.options,
+    questionType: q.questionType,
+    difficulty: q.difficulty,
+    hasCode: q.hasCode,
+    conceptTag: q.conceptTag,
   }));
 }
 
@@ -29,7 +36,8 @@ async function getVerificationStats(userId) {
   const skills = user.skills || [];
   const results = await VerificationResult.find({ userId })
     .sort({ createdAt: -1 })
-    .limit(10);
+    .limit(10)
+    .lean();
 
   return {
     totalSkills: skills.length,
@@ -44,6 +52,7 @@ async function getVerificationStats(userId) {
     points: user.points || 0,
     badges: user.badges || [],
     recentResults: results,
+    passThreshold: PASS_THRESHOLD,
   };
 }
 
@@ -55,33 +64,71 @@ async function startQuiz(userId, skillId) {
   if (!skill) throw new Error("Skill not found");
   if (skill.verified) throw new Error("This skill is already verified");
 
-  // Invalidate previous open attempts for this skill
   await VerificationAttempt.deleteMany({
     userId,
     skillId,
     submitted: false,
   });
 
-  const { questions, modelUsed, source } = await generateQuiz(
-    skill.name,
-    skill.proficiency || "intermediate"
-  );
+  const priorHistory = await getVerificationHistory(userId, skill.name);
+
+  const skillPayload = {
+    name: skill.name,
+    category: skill.category,
+    proficiency: skill.proficiency,
+    experience: skill.experience,
+    description: skill.description,
+  };
+
+  const context = detectSkillContext(skillPayload);
+
+  const {
+    questions,
+    modelUsed,
+    source,
+    skillCategory,
+    categoryLabel,
+    skillKey,
+    sessionSeed,
+    askedConcepts,
+  } = await generateQuiz(skillPayload, { priorHistory });
 
   const attempt = await VerificationAttempt.create({
     userId,
     skillId,
     skillName: skill.name,
+    skillKey: skillKey || "general",
+    skillCategory: skillCategory || context.categoryId,
+    categoryLabel: categoryLabel || context.categoryLabel,
+    profileCategory: skill.category,
     proficiency: skill.proficiency,
+    sessionSeed,
+    askedConcepts,
     questions,
     modelUsed,
     source,
   });
 
+  await SkillQuestionHistory.create({
+    userId,
+    skillId,
+    skillName: skill.name,
+    skillKey: skillKey || "general",
+    questionHashes: questions.map((q) => q.questionHash).filter(Boolean),
+    conceptTags: askedConcepts || [],
+    sessionSeed,
+    attemptId: attempt._id,
+  });
+
   return {
     attemptId: attempt._id,
     skillName: skill.name,
+    skillKey: attempt.skillKey,
+    skillCategory: attempt.skillCategory,
+    categoryLabel: attempt.categoryLabel,
     questionCount: questions.length,
-    timeLimitSeconds: 600,
+    timeLimitSeconds: 900,
+    passThreshold: PASS_THRESHOLD,
     questions: sanitizeQuestionsForClient(questions),
     modelUsed,
     source,
@@ -103,7 +150,11 @@ async function submitQuiz(userId, attemptId, answers, timeTakenSeconds = 0) {
     throw new Error("Quiz attempt has expired. Please start a new quiz.");
   }
 
-  const grade = gradeQuiz(attempt.questions, answers);
+  const grade = gradeQuiz(
+    attempt.questions,
+    answers,
+    attempt.skillCategory || "general"
+  );
 
   attempt.submitted = true;
   await attempt.save();
@@ -117,6 +168,7 @@ async function submitQuiz(userId, attemptId, answers, timeTakenSeconds = 0) {
   skill.verificationMethod = "ai_quiz";
   if (grade.verified) {
     skill.verifiedAt = new Date();
+    skill.verificationCategory = attempt.skillCategory;
     user.isVerified = true;
   }
 
@@ -125,12 +177,16 @@ async function submitQuiz(userId, attemptId, answers, timeTakenSeconds = 0) {
     : POINT_VALUES.VERIFICATION_FAIL;
   awardPoints(user, pointsEarned);
   syncVerificationBadges(user);
+  syncUserSkillArrays(user);
 
   await VerificationResult.create({
     userId,
     skillId: attempt.skillId,
     skillName: attempt.skillName,
+    skillCategory: attempt.skillCategory,
+    categoryLabel: attempt.categoryLabel,
     score: grade.score,
+    weightedScore: grade.score,
     totalQuestions: grade.totalQuestions,
     correctAnswers: grade.correctAnswers,
     verified: grade.verified,
@@ -139,6 +195,7 @@ async function submitQuiz(userId, attemptId, answers, timeTakenSeconds = 0) {
     modelUsed: attempt.modelUsed,
     source: attempt.source,
     timeTakenSeconds,
+    passThreshold: PASS_THRESHOLD,
   });
 
   await createNotification({
@@ -146,8 +203,8 @@ async function submitQuiz(userId, attemptId, answers, timeTakenSeconds = 0) {
     type: grade.verified ? "verification_pass" : "verification_fail",
     title: grade.verified ? "Skill Verified!" : "Verification Failed",
     message: grade.verified
-      ? `You passed the ${attempt.skillName} quiz with ${grade.score}% and earned ${pointsEarned} points!`
-      : `You scored ${grade.score}% on ${attempt.skillName}. Minimum 70% required. Try again!`,
+      ? `You passed the ${attempt.skillName} (${attempt.categoryLabel}) assessment with ${grade.score}% and earned ${pointsEarned} points!`
+      : `You scored ${grade.score}% on ${attempt.skillName}. Minimum ${PASS_THRESHOLD}% required. Try again!`,
     meta: { skillId: attempt.skillId, score: grade.score },
   });
 
@@ -173,9 +230,40 @@ async function submitQuiz(userId, attemptId, answers, timeTakenSeconds = 0) {
     totalPoints: user.points,
     badges: user.badges,
     skillName: attempt.skillName,
+    skillKey: attempt.skillKey,
+    skillCategory: attempt.skillCategory,
+    categoryLabel: attempt.categoryLabel,
+    passThreshold: PASS_THRESHOLD,
     message: grade.verified
       ? "Congratulations! Your skill has been verified."
-      : "Score below 70%. Please review and try again.",
+      : `Score below ${PASS_THRESHOLD}%. Please review and try again.`,
+  };
+}
+
+async function previewSkillCategory(userId, skillId) {
+  const user = await User.findById(userId).select("skills");
+  if (!user) throw new Error("User not found");
+
+  const skill = user.skills.id(skillId);
+  if (!skill) throw new Error("Skill not found");
+
+  const context = detectSkillContext({
+    name: skill.name,
+    category: skill.category,
+    proficiency: skill.proficiency,
+    experience: skill.experience,
+    description: skill.description,
+  });
+
+  const { normalizeSkillKey } = require("./aiQuizPromptService");
+
+  return {
+    skillCategory: context.categoryId,
+    categoryLabel: context.categoryLabel,
+    skillKey: normalizeSkillKey(skill.name),
+    displayName: skill.name,
+    questionTypes: context.questionTypes,
+    aiOnly: true,
   };
 }
 
@@ -183,4 +271,5 @@ module.exports = {
   getVerificationStats,
   startQuiz,
   submitQuiz,
+  previewSkillCategory,
 };

@@ -7,9 +7,12 @@ import ResultModal from "../components/verification/ResultModal";
 import {
   getVerificationStats,
   getUnverifiedSkills,
+  previewSkillCategory,
   startQuiz,
   submitQuiz,
 } from "../services/verificationService";
+import CategoryBadge from "../components/verification/CategoryBadge";
+import SkillBadge from "../components/verification/SkillBadge";
 import {
   Award,
   ArrowLeft,
@@ -34,6 +37,17 @@ export default function SkillVerification() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [categoryPreview, setCategoryPreview] = useState(null);
+
+  useEffect(() => {
+    if (!selectedSkill?._id) {
+      setCategoryPreview(null);
+      return;
+    }
+    previewSkillCategory(selectedSkill._id)
+      .then(({ data }) => setCategoryPreview(data))
+      .catch(() => setCategoryPreview(null));
+  }, [selectedSkill?._id]);
 
   const loadData = async () => {
     setLoading(true);
@@ -70,8 +84,12 @@ export default function SkillVerification() {
       setQuiz({
         attemptId: data.attemptId,
         skillName: data.skillName,
+        skillKey: data.skillKey,
+        skillCategory: data.skillCategory,
+        categoryLabel: data.categoryLabel,
         questions: data.questions,
         timeLimitSeconds: data.timeLimitSeconds,
+        passThreshold: data.passThreshold ?? 70,
       });
       setStep("quiz");
     } catch (err) {
@@ -144,8 +162,9 @@ export default function SkillVerification() {
                     AI Skill Verification
                   </h1>
                   <p className="text-gray-600 dark:text-gray-400 mt-2 max-w-2xl">
-                    Hugging Face generates dynamic MCQs for your skill. Score 70%+
-                    to earn a verified badge and gamification points.
+                    Each quiz is generated live by Hugging Face AI (Mistral / FLAN)
+                    for your exact skill and category — no stored question bank.
+                    Score 70%+ to earn a verified badge.
                   </p>
                 </div>
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl glass-card text-sm font-medium text-purple-700 dark:text-purple-300">
@@ -222,9 +241,9 @@ export default function SkillVerification() {
                   <ol className="mt-3 grid sm:grid-cols-2 lg:grid-cols-5 gap-3 text-sm text-gray-600 dark:text-gray-400">
                     {[
                       "Select skill",
-                      "AI generates MCQs",
-                      "Take timed quiz",
-                      "Auto scoring",
+                      "Detect category",
+                      "HF AI generates fresh MCQs",
+                      "Timed assessment",
                       "Earn badge if ≥70%",
                     ].map((s, i) => (
                       <li key={s} className="flex items-center gap-2">
@@ -283,6 +302,20 @@ export default function SkillVerification() {
                             {skill.category} • {skill.experience || 0} yrs •{" "}
                             {skill.proficiency}
                           </p>
+                          {selectedSkill?._id === skill._id && categoryPreview && (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <SkillBadge
+                                skillKey={categoryPreview.skillKey}
+                                skillName={categoryPreview.displayName || skill.name}
+                                size="sm"
+                              />
+                              <CategoryBadge
+                                categoryId={categoryPreview.skillCategory}
+                                categoryLabel={categoryPreview.categoryLabel}
+                                size="sm"
+                              />
+                            </div>
+                          )}
                           {skill.description && (
                             <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">
                               {skill.description}
@@ -311,7 +344,10 @@ export default function SkillVerification() {
         )}
 
         {step === "generating" && (
-          <GeneratingQuiz skillName={selectedSkill?.name} />
+          <GeneratingQuiz
+            skillName={selectedSkill?.name}
+            profileCategory={selectedSkill?.category}
+          />
         )}
 
         {step === "quiz" && quiz && (

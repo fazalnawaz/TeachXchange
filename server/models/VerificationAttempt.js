@@ -6,6 +6,15 @@ const questionSchema = new mongoose.Schema(
     question: { type: String, required: true },
     options: [{ type: String, required: true }],
     correctIndex: { type: Number, required: true, min: 0, max: 3 },
+    questionType: { type: String, default: "theory" },
+    difficulty: {
+      type: String,
+      enum: ["easy", "medium", "hard"],
+      default: "medium",
+    },
+    hasCode: { type: Boolean, default: false },
+    questionHash: { type: String },
+    conceptTag: { type: String },
   },
   { _id: false }
 );
@@ -20,10 +29,16 @@ const verificationAttemptSchema = new mongoose.Schema(
     },
     skillId: { type: mongoose.Schema.Types.ObjectId, required: true },
     skillName: { type: String, required: true },
+    skillKey: { type: String, default: "general" },
+    skillCategory: { type: String, default: "general" },
+    sessionSeed: { type: String },
+    askedConcepts: [{ type: String }],
+    categoryLabel: { type: String, default: "General Skills" },
+    profileCategory: { type: String, default: "General" },
     proficiency: { type: String, default: "intermediate" },
     questions: [questionSchema],
-    modelUsed: { type: String, default: "google/flan-t5-large" },
-    source: { type: String, enum: ["ai", "fallback"], default: "ai" },
+    modelUsed: { type: String, default: "mistralai/Mistral-7B-Instruct-v0.2" },
+    source: { type: String, enum: ["ai"], default: "ai" },
     submitted: { type: Boolean, default: false },
     expiresAt: {
       type: Date,
@@ -33,5 +48,7 @@ const verificationAttemptSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+verificationAttemptSchema.index({ userId: 1, skillName: 1 });
 
 module.exports = mongoose.model("VerificationAttempt", verificationAttemptSchema);

@@ -23,6 +23,14 @@ exports.getAllSkills = async (req, res) => {
   res.json(user?.skills || []);
 };
 
+exports.previewCategory = async (req, res) => {
+  const preview = await verificationService.previewSkillCategory(
+    req.user._id,
+    req.params.skillId
+  );
+  res.json(preview);
+};
+
 exports.startQuiz = async (req, res) => {
   const { skillId } = req.body;
   if (!skillId) {

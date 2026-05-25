@@ -10,6 +10,7 @@ const skillSchema = new mongoose.Schema({
   verifiedScore: { type: Number, default: 0 },
   verifiedAt: { type: Date },
   verificationMethod: { type: String, default: "ai_quiz" },
+  verificationCategory: { type: String, default: "" },
   createdAt: { type: Date, default: Date.now },
 });
 

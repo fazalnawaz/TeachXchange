@@ -1,6 +1,8 @@
 import { useEffect } from "react";
-import { Award, XCircle, Trophy, Star, X } from "lucide-react";
+import { Award, XCircle, Trophy, Star, X, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
+import CategoryBadge from "./CategoryBadge";
+import SkillBadge from "./SkillBadge";
 
 export default function ResultModal({ result, onClose }) {
   const passed = result?.verified;
@@ -23,28 +25,39 @@ export default function ResultModal({ result, onClose }) {
       />
 
       <div
-        className={`relative w-full max-w-md rounded-2xl p-8 text-center shadow-2xl animate-scale-in ${
+        className={`relative w-full max-w-md rounded-2xl p-8 text-center shadow-2xl animate-scale-in overflow-hidden ${
           passed
             ? "bg-white dark:bg-gray-900 border-2 border-green-200 dark:border-green-800"
             : "bg-white dark:bg-gray-900 border-2 border-red-200 dark:border-red-800"
         }`}
       >
+        {passed && (
+          <div
+            className="absolute inset-0 certificate-shine pointer-events-none opacity-40"
+            aria-hidden
+          />
+        )}
+
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="absolute top-4 right-4 p-1 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 z-10"
         >
           <X size={20} />
         </button>
 
         {passed ? (
           <>
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 flex items-center justify-center animate-badge-pop">
-              <Award className="text-white w-10 h-10" />
+            <div className="relative w-24 h-24 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-green-400 via-emerald-500 to-teal-600 flex items-center justify-center animate-badge-pop shadow-lg">
+              <Award className="text-white w-12 h-12" />
+            </div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 text-xs font-bold mb-2">
+              <ShieldCheck size={14} />
+              VERIFIED CERTIFICATE
             </div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-              Verified!
+              Skill Verified!
             </h2>
-            <p className="text-green-600 dark:text-green-400 font-semibold text-lg mb-4">
+            <p className="text-green-600 dark:text-green-400 font-semibold text-lg mb-2">
               {result.score}% — PASSED
             </p>
           </>
@@ -56,15 +69,28 @@ export default function ResultModal({ result, onClose }) {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
               Not Verified
             </h2>
-            <p className="text-red-600 dark:text-red-400 font-semibold text-lg mb-4">
-              {result.score}% — Need 70%+
+            <p className="text-red-600 dark:text-red-400 font-semibold text-lg mb-2">
+              {result.score}% — Need {result.passThreshold ?? 70}%+
             </p>
           </>
         )}
 
-        <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-          {result.skillName}: {result.correctAnswers}/{result.totalQuestions}{" "}
-          correct
+        <div className="flex justify-center flex-wrap gap-2 mb-3">
+          {result.skillKey && (
+            <SkillBadge skillKey={result.skillKey} skillName={result.skillName} />
+          )}
+          <CategoryBadge
+            categoryId={result.skillCategory}
+            categoryLabel={result.categoryLabel}
+          />
+        </div>
+
+        <p className="text-gray-600 dark:text-gray-400 text-sm mb-1 font-medium">
+          {result.skillName}
+        </p>
+        <p className="text-gray-500 dark:text-gray-500 text-sm mb-4">
+          {result.correctAnswers}/{result.totalQuestions} correct • weighted
+          category scoring
         </p>
 
         {result.pointsEarned > 0 && (
@@ -74,7 +100,7 @@ export default function ResultModal({ result, onClose }) {
           </div>
         )}
 
-        <div className="flex flex-col gap-2 mt-4">
+        <div className="flex flex-col gap-2 mt-4 relative z-10">
           {passed && (
             <Link
               to="/profile"

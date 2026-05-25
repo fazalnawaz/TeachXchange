@@ -39,9 +39,9 @@ app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
     hfConfigured: Boolean(process.env.HF_API_KEY),
-    model: process.env.HF_MODEL || "google/flan-t5-large",
-    fallbackModel:
-      process.env.HF_FALLBACK_MODEL || "mistralai/Mistral-7B-Instruct-v0.2",
+    hfRouter: process.env.HF_ROUTER_URL || "https://router.huggingface.co/v1",
+    model: process.env.HF_MODEL || "Qwen/Qwen2.5-7B-Instruct-1M",
+    fallbackModel: process.env.HF_FALLBACK_MODEL || "google/gemma-2-2b-it",
   });
 });
 
@@ -69,6 +69,6 @@ server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log("Socket.io enabled for real-time chat");
   if (!process.env.HF_API_KEY) {
-    console.warn("Warning: HF_API_KEY not set — AI quiz will use dynamic fallback");
+    console.warn("Warning: HF_API_KEY not set — skill verification quizzes will fail until configured");
   }
 });

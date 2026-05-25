@@ -17,6 +17,9 @@ export const getUnverifiedSkills = () =>
 export const getAllSkills = () =>
   api.get("/skills", { headers: authHeaders() });
 
+export const previewSkillCategory = (skillId) =>
+  api.get(`/skills/${skillId}/category`, { headers: authHeaders() });
+
 export const startQuiz = (skillId) =>
   api.post("/quiz/start", { skillId }, { headers: authHeaders() });
 
