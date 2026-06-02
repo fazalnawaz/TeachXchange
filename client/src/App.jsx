@@ -41,8 +41,6 @@ import Sessions from './pages/Sessions';
 import Messages from './pages/Messages';
 import Leaderboard from './pages/Leaderboard';
 import VideoRoom from './pages/VideoRoom';
-import Notifications from './pages/Notifications';
-import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -103,16 +101,6 @@ function App() {
         <Route path="/leaderboard" element={
           <ProtectedRoute>
             <Leaderboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/notifications" element={
-          <ProtectedRoute>
-            <Notifications />
-          </ProtectedRoute>
-        } />
-        <Route path="/settings" element={
-          <ProtectedRoute>
-            <Settings />
           </ProtectedRoute>
         } />
         <Route path="*" element={<Navigate to="/" replace />} />
