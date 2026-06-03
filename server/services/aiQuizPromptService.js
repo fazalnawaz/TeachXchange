@@ -12,7 +12,7 @@ You are assessing PROGRAMMING skill "{skillName}" ONLY.
 - Include a mix: theory, syntax, code OUTPUT (short snippet in question text), debugging, practical scenario.
 - For OUTPUT/debugging: embed authentic {skillName} code in the question field (plain text, no markdown fences).
 - Topics must be native to {skillName} (e.g. C++: pointers/STL/RAII; Java: JVM/GC/collections; Python: GIL/decorators/comprehensions).
-- Difficulty: mostly medium and hard. Interview-level.`,
+- Difficulty: easy to moderate. Fundamentals a confident beginner/intermediate should know — NOT interview-level or tricky edge cases.`,
   [CATEGORY_IDS.LANGUAGE]: `
 You are assessing HUMAN LANGUAGE skill "{skillName}" ONLY.
 - STRICT: NO programming, NO code, NO software development questions.
@@ -83,7 +83,7 @@ function seededShuffle(arr, seedHex) {
 /**
  * Random question-type mix for this session (types only, not content).
  */
-function buildQuestionMix(context, sessionSeed, count = 8) {
+function buildQuestionMix(context, sessionSeed, count = 5) {
   const types =
     context.categoryId === CATEGORY_IDS.LANGUAGE
       ? LANGUAGE_TYPES
@@ -98,7 +98,7 @@ function buildQuestionMix(context, sessionSeed, count = 8) {
       slot: i + 1,
       questionType: shuffled[i % shuffled.length],
       difficulty: seededShuffle(
-        ["medium", "hard", "hard", "medium"],
+        ["easy", "easy", "medium", "easy"],
         sessionSeed + String(i)
       )[0],
     });
@@ -147,7 +147,7 @@ function buildQuizPrompt(context, meta) {
 
   const retryBlock =
     retryAttempt > 0
-      ? `\nRETRY ${retryAttempt}: Previous response was invalid or duplicate. Generate completely NEW questions with different concepts and wording. Need at least ${shortage || 8} valid questions.`
+      ? `\nRETRY ${retryAttempt}: Previous response was invalid or duplicate. Generate completely NEW questions with different concepts and wording. Need at least ${shortage || 5} valid questions.`
       : "";
 
   const randomNonce = crypto.randomBytes(6).toString("hex");
@@ -193,7 +193,7 @@ Rules:
 - Each conceptTag must be unique and describe the tested concept
 - correctIndex 0-3, exactly 4 plausible options
 - All questions must be about "${context.skillName}" only
-- Majority difficulty medium/hard`;
+- Keep difficulty easy to moderate — clear, fair questions, no hard/interview-level or trick questions`;
 }
 
 const GENERIC_PATTERNS = [

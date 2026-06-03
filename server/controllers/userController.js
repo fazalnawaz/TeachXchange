@@ -230,7 +230,7 @@ exports.verifySkill = async (req, res) => {
     }
 
     skill.verifiedScore = score;
-    skill.verified = score >= 70;
+    skill.verified = score >= 50;
 
     syncUserSkillArrays(user);
     await user.save();

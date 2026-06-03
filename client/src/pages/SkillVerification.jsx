@@ -164,7 +164,7 @@ export default function SkillVerification() {
                   <p className="text-gray-600 dark:text-gray-400 mt-2 max-w-2xl">
                     Each quiz is generated live by Hugging Face AI (Mistral / FLAN)
                     for your exact skill and category — no stored question bank.
-                    Score 70%+ to earn a verified badge.
+                    Score 50%+ to earn a verified badge.
                   </p>
                 </div>
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl glass-card text-sm font-medium text-purple-700 dark:text-purple-300">
@@ -244,7 +244,7 @@ export default function SkillVerification() {
                       "Detect category",
                       "HF AI generates fresh MCQs",
                       "Timed assessment",
-                      "Earn badge if ≥70%",
+                      "Earn badge if ≥50%",
                     ].map((s, i) => (
                       <li key={s} className="flex items-center gap-2">
                         <span className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 text-xs font-bold flex items-center justify-center">

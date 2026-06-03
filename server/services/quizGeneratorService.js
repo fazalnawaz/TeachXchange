@@ -8,8 +8,8 @@ const {
   normalizeSkillKey,
 } = require("./aiQuizPromptService");
 
-const QUESTION_COUNT = 8;
-const PASS_THRESHOLD = 70;
+const QUESTION_COUNT = 5;
+const PASS_THRESHOLD = 50;
 const MAX_GENERATION_ATTEMPTS = 4;
 
 const TYPE_WEIGHTS = {

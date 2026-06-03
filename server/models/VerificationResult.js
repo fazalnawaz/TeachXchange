@@ -38,7 +38,7 @@ const verificationResultSchema = new mongoose.Schema(
     modelUsed: { type: String, default: "mistralai/Mistral-7B-Instruct-v0.2" },
     source: { type: String, enum: ["ai"], default: "ai" },
     timeTakenSeconds: { type: Number, default: 0 },
-    passThreshold: { type: Number, default: 70 },
+    passThreshold: { type: Number, default: 50 },
   },
   { timestamps: true }
 );
