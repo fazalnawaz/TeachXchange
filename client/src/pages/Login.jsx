@@ -27,7 +27,12 @@ export default function Login() {
       const { data } = await axios.post(`${API_URL}/api/auth/login`, form);
       localStorage.setItem("token", data.token);
       localStorage.setItem("userEmail", form.email);
-      navigate("/dashboard", { replace: true });
+      localStorage.setItem("userRole", data.userRole || "learner");
+      if (data.userName) localStorage.setItem("userName", data.userName);
+      if (data.userId) localStorage.setItem("userId", data.userId);
+      navigate(data.userRole === "admin" ? "/admin" : "/dashboard", {
+        replace: true,
+      });
     } catch (err) {
       setError(
         err.response?.data?.message || err.message || "Login failed"

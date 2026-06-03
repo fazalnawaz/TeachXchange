@@ -125,16 +125,23 @@ exports.getMessages = async (req, res) => {
 
 exports.getLeaderboard = async (req, res) => {
   try {
+    // --- OLD: sorted by rating, did not return points ---
+    // const users = await User.find({ role: "teacher" })
+    //   .sort({ rating: -1 })
+    //   .limit(20)
+    //   .select("firstName lastName location rating");
+    // --- NEW: sort by points (rating as tiebreaker) and include points ---
     const users = await User.find({ role: "teacher" })
-      .sort({ rating: -1 })
+      .sort({ points: -1, rating: -1 })
       .limit(20)
-      .select("firstName lastName location rating");
+      .select("firstName lastName location rating points");
 
     const results = users.map((user) => ({
       _id: user._id,
       name: `${user.firstName} ${user.lastName}`.trim(),
       location: user.location || "Worldwide",
       rating: user.rating,
+      points: user.points || 0, // NEW: expose points to the leaderboard UI
     }));
 
     res.json(results);

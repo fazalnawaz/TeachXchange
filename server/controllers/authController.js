@@ -54,6 +54,15 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
+    if (user.accountStatus === "banned") {
+      return res.status(403).json({ message: "This account has been banned." });
+    }
+    if (user.accountStatus === "suspended") {
+      return res
+        .status(403)
+        .json({ message: "This account is suspended. Contact support." });
+    }
+
     const token = jwt.sign(
       { id: user._id },
       process.env.JWT_SECRET,
@@ -63,8 +72,10 @@ exports.login = async (req, res) => {
     res.json({
       message: "Login successful",
       token,
+      userId: user._id,
       userName: `${user.firstName} ${user.lastName}`.trim(),
       userRole: user.role,
+      accountStatus: user.accountStatus,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

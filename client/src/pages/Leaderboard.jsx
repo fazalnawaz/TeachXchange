@@ -8,6 +8,10 @@ export default function Leaderboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // NEW: highest points value, used to scale the progress bars.
+  // Leaders arrive already sorted by points (highest first) from the API.
+  const maxPoints = Math.max(1, ...leaders.map((l) => l.points || 0));
+
   useEffect(() => {
     fetchLeaderboard();
   }, []);
@@ -49,10 +53,19 @@ export default function Leaderboard() {
           </div>
         ) : (
           <div className="overflow-hidden rounded-3xl border border-gray-100 shadow-sm bg-white">
+            {/* --- OLD header (Score bar based on rating + Rating only) ---
             <div className="grid grid-cols-12 gap-4 bg-gray-50 px-6 py-4 text-sm font-semibold text-gray-600">
               <div className="col-span-1">#</div>
               <div className="col-span-5">Name</div>
               <div className="col-span-4">Score</div>
+              <div className="col-span-2 text-right">Rating</div>
+            </div>
+            --- end OLD header --- */}
+            {/* NEW header: Points column added, layout = # | Name | Points | Rating */}
+            <div className="grid grid-cols-12 gap-4 bg-gray-50 px-6 py-4 text-sm font-semibold text-gray-600">
+              <div className="col-span-1">#</div>
+              <div className="col-span-5">Name</div>
+              <div className="col-span-4">Points</div>
               <div className="col-span-2 text-right">Rating</div>
             </div>
             <div className="divide-y divide-gray-100">
@@ -63,12 +76,26 @@ export default function Leaderboard() {
                     <p className="font-medium text-gray-900">{leader.name}</p>
                     <p className="text-xs text-gray-500">{leader.location || 'Unknown location'}</p>
                   </div>
+                  {/* --- OLD Points column: progress bar was based on rating (rating/5) ---
                   <div className="col-span-4">
                     <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
                       <div
                         className="h-2.5 rounded-full bg-gradient-to-r from-purple-600 to-blue-600"
                         style={{ width: `${Math.min(100, (leader.rating || 0) / 5 * 100)}%` }}
                       />
+                    </div>
+                  </div>
+                  --- end OLD Points column --- */}
+                  {/* NEW Points column: shows the points value + a bar scaled to the top scorer */}
+                  <div className="col-span-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                        <div
+                          className="h-2.5 rounded-full bg-gradient-to-r from-purple-600 to-blue-600"
+                          style={{ width: `${Math.min(100, ((leader.points || 0) / maxPoints) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="font-semibold text-gray-900 w-12 text-right">{leader.points || 0}</span>
                     </div>
                   </div>
                   <div className="col-span-2 text-right text-gray-900 font-semibold">{(leader.rating || 0).toFixed(1)}</div>

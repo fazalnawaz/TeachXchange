@@ -42,6 +42,11 @@ import Messages from './pages/Messages';
 import Leaderboard from './pages/Leaderboard';
 import VideoRoom from './pages/VideoRoom';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminVerifications from './pages/admin/AdminVerifications';
+import AdminSessions from './pages/admin/AdminSessions';
 
 function App() {
   return (
@@ -103,6 +108,29 @@ function App() {
             <Leaderboard />
           </ProtectedRoute>
         } />
+
+        {/* Admin Routes */}
+        <Route path="/admin" element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
+        } />
+        <Route path="/admin/users" element={
+          <AdminRoute>
+            <AdminUsers />
+          </AdminRoute>
+        } />
+        <Route path="/admin/verifications" element={
+          <AdminRoute>
+            <AdminVerifications />
+          </AdminRoute>
+        } />
+        <Route path="/admin/sessions" element={
+          <AdminRoute>
+            <AdminSessions />
+          </AdminRoute>
+        } />
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

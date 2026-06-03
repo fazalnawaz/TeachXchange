@@ -16,9 +16,21 @@ exports.protect = async (req, res, next) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
+    if (user.accountStatus === "banned") {
+      return res.status(403).json({ message: "This account has been banned." });
+    }
+
     req.user = user;
     next();
   } catch (error) {
     return res.status(401).json({ message: "Invalid or expired token" });
   }
+};
+
+// Allow only admin users past this point. Use after `protect`.
+exports.admin = (req, res, next) => {
+  if (!req.user || req.user.role !== "admin") {
+    return res.status(403).json({ message: "Admin access required" });
+  }
+  next();
 };

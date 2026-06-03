@@ -67,6 +67,11 @@ const userSchema = new mongoose.Schema({
     enum: ["learner", "teacher", "admin"],
     default: "learner",
   },
+  accountStatus: {
+    type: String,
+    enum: ["active", "suspended", "banned"],
+    default: "active",
+  },
   bio: {
     type: String,
     default: "",
@@ -153,7 +158,7 @@ const userSchema = new mongoose.Schema({
   ],
   sessions: [sessionSchema],
   messages: [messageSchema],
-});
+}, { timestamps: true });
 
 userSchema.index({ "skills.name": 1 });
 userSchema.index({ "learningGoals.name": 1 });
