@@ -31,6 +31,12 @@ const UserProfile = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('teach');
 
+  const formatDate = (dateValue) => {
+    if (!dateValue) return 'Unknown';
+    const date = new Date(dateValue);
+    return Number.isNaN(date.getTime()) ? 'Unknown' : date.toLocaleDateString();
+  };
+
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -97,7 +103,7 @@ const UserProfile = () => {
                   </span>
                 )}
                 <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium flex items-center gap-1">
-                  <Star size={14} /> {profile?.rating || 4.8} ★
+                  <Star size={14} /> {profile?.rating || 4.7} ★
                 </span>
               </div>
               <div className="flex flex-wrap gap-4 text-gray-600">
@@ -113,7 +119,7 @@ const UserProfile = () => {
                 )}
                 <div className="flex items-center gap-1">
                   <Calendar size={16} />
-                  <span>Joined {new Date(profile?.createdAt).toLocaleDateString()}</span>
+                  <span>Joined {formatDate(profile?.createdAt)}</span>
                 </div>
               </div>
               {profile?.bio && (

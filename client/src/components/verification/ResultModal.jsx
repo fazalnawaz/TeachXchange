@@ -70,7 +70,7 @@ export default function ResultModal({ result, onClose }) {
               Not Verified
             </h2>
             <p className="text-red-600 dark:text-red-400 font-semibold text-lg mb-2">
-              {result.score}% — Need {result.passThreshold ?? 70}%+
+              {result.score}% — Need 50%+
             </p>
           </>
         )}
@@ -85,12 +85,12 @@ export default function ResultModal({ result, onClose }) {
           />
         </div>
 
-        <p className="text-gray-600 dark:text-gray-400 text-sm mb-1 font-medium">
+        <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 font-medium">
           {result.skillName}
         </p>
-        <p className="text-gray-500 dark:text-gray-500 text-sm mb-4">
-          {result.correctAnswers}/{result.totalQuestions} correct • weighted
-          category scoring
+
+        <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+          {result.correctAnswers}/{result.totalQuestions} correct
         </p>
 
         {result.pointsEarned > 0 && (

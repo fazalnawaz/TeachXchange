@@ -7,7 +7,6 @@ const answerSchema = new mongoose.Schema(
     isCorrect: { type: Boolean, default: false },
     questionType: { type: String },
     difficulty: { type: String },
-    weight: { type: Number, default: 1 },
   },
   { _id: false }
 );
@@ -25,9 +24,10 @@ const verificationResultSchema = new mongoose.Schema(
     skillCategory: { type: String, default: "general" },
     categoryLabel: { type: String, default: "General Skills" },
     score: { type: Number, required: true, min: 0, max: 100 },
-    weightedScore: { type: Number, min: 0, max: 100 },
-    totalQuestions: { type: Number, default: 8 },
+    percentage: { type: Number, min: 0, max: 100 },
+    totalQuestions: { type: Number, default: 5 },
     correctAnswers: { type: Number, default: 0 },
+    wrongAnswers: { type: Number, default: 0 },
     verified: { type: Boolean, default: false },
     status: {
       type: String,

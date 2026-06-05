@@ -31,6 +31,7 @@ const buildProfile = (user) => ({
   learnSkills: user.learningGoals || [],
   sessions: user.sessions,
   messages: user.messages,
+  createdAt: user.createdAt,
 });
 
 exports.getProfile = async (req, res) => {
@@ -229,7 +230,7 @@ exports.verifySkill = async (req, res) => {
     let score = 60;
     if (method === 'quiz' && answers) {
       const answerCount = Object.keys(JSON.parse(answers)).length;
-      score = Math.min(100, 60 + answerCount * 8 + Math.floor(Math.random() * 11));
+      score = Math.min(100, 60 + answerCount * 5 + Math.floor(Math.random() * 11));
     } else if (method === 'project' && req.file) {
       score = 80 + Math.floor(Math.random() * 11);
     } else {

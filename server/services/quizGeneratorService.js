@@ -271,21 +271,17 @@ function getTypeWeight(categoryId, questionType) {
 }
 
 function gradeQuiz(questions, answers, skillCategory = "general") {
-  let earned = 0;
-  let possible = 0;
-  let correct = 0;
+  let correctAnswers = 0;
+  const totalQuestions = questions.length;
 
   const gradedAnswers = questions.map((q) => {
     const userAnswer = answers.find((a) => a.questionId === q.questionId);
     const selectedIndex =
       userAnswer !== undefined ? Number(userAnswer.selectedIndex) : -1;
     const isCorrect = selectedIndex === q.correctIndex;
-    const weight = getTypeWeight(skillCategory, q.questionType);
 
-    possible += weight;
     if (isCorrect) {
-      correct += 1;
-      earned += weight;
+      correctAnswers += 1;
     }
 
     return {
@@ -295,18 +291,24 @@ function gradeQuiz(questions, answers, skillCategory = "general") {
       questionType: q.questionType,
       difficulty: q.difficulty,
       conceptTag: q.conceptTag,
-      weight,
     };
   });
 
-  const score = possible > 0 ? Math.round((earned / possible) * 100) : 0;
+  // Simple scoring: (correctAnswers / 5) * 100
+  const percentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+  const wrongAnswers = totalQuestions - correctAnswers;
+
+  // Verification: percentage >= 50%
+  const isVerified = percentage >= PASS_THRESHOLD;
 
   return {
-    score,
-    verified: score >= PASS_THRESHOLD,
-    status: score >= PASS_THRESHOLD ? "PASSED" : "FAILED",
-    correctAnswers: correct,
-    totalQuestions: questions.length,
+    score: percentage,
+    verified: isVerified,
+    status: isVerified ? "PASSED" : "FAILED",
+    correctAnswers,
+    totalQuestions,
+    wrongAnswers,
+    percentage,
     gradedAnswers,
     passThreshold: PASS_THRESHOLD,
     skillCategory,

@@ -94,7 +94,7 @@ const userSchema = new mongoose.Schema({
   },
   rating: {
     type: Number,
-    default: 4.8,
+    default: 4.7,
   },
   points: {
     type: Number,
